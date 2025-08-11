@@ -206,7 +206,7 @@ export default function App() {
             <main className="container mx-auto px-4 py-8 md:py-12">
                 <header className="text-center mb-10">
                     <div className="inline-flex items-center gap-3 bg-white shadow-sm rounded-full p-3 mb-4">
-                        <div className=" text-white p-2 rounded-full"><img src="/assets/logo.png" alt="Company Logo" width="48" height="48" /></div>
+                        <div className=" text-white p-2 rounded-full"><img src="https://www.dess.digital/wp-content/uploads/2021/09/cropped-Dess-Logo-Final-1-1.png" alt="Company Logo" width="48" height="48" /></div>
                         <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">Dess Meeting Minutes Generator</h1>
                     </div>
                     <p className="text-lg text-slate-600 max-w-2xl mx-auto">
