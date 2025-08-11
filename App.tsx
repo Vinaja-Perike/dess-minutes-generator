@@ -337,14 +337,14 @@ export default function App() {
                                     {isCopied ? <Check size={16} /> : <Copy size={16} />}
                                     {isCopied ? 'Copied!' : 'Copy Text'}
                                 </button>
-                                <button
+                                {/* <button
                                     onClick={handleDownloadPdf}
                                     disabled={!minutesOfMeeting || isDownloading}
                                     className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
                                 >
                                     {isDownloading ? <Loader /> : <Download size={16} />}
                                     Download PDF
-                                </button>
+                                </button> */}
                             </div>
                         </div>
                         <div className="prose prose-slate max-w-none flex-grow bg-slate-50 p-4 rounded-lg border border-slate-200 overflow-y-auto">
