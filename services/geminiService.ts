@@ -34,7 +34,7 @@ const buildPrompt = (agenda: string, transcription: string, attendanceData: Atte
   return `
     **System Instruction:** You are a highly skilled administrative assistant with expertise in creating professional, detailed, and well-structured Minutes of Meeting (MoM). Your task is to synthesize information from a meeting agenda, an attendance sheet, and its corresponding transcription into a formal MoM document.
 
-    **Task:** Generate a comprehensive Minutes of Meeting document based on the provided documents. The output must be in clean, simple Markdown format. For tables, use standard pipe-based Markdown table syntax.
+    **Task:** Generate a comprehensive Minutes of Meeting document based on the provided documents. The output must be in clean, simple Markdown format. For tables, use standard pipe-based Markdown table syntax. Do NOT use horizontal rules (e.g., '---' or '***') to separate sections.
 
     **Output Structure:**
     The generated MoM must include the following sections:
