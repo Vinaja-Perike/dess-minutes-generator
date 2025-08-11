@@ -1,0 +1,5 @@
+{
+  "name": "AI Meeting Minutes Generator",
+  "description": "An application that uses a meeting transcription and agenda to generate detailed Minutes of Meeting (MoM) using the Gemini API. The final document can be downloaded as a PDF.",
+  "requestFramePermissions": []
+}
