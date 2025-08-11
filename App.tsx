@@ -236,7 +236,7 @@ export default function App() {
                                     {transcription ? 'Fetched' : 'Fetch'}
                                 </button>
                             </div>
-                            {transcription && <p className="text-sm text-green-600 mt-2">✓ Transcription and recording data loaded successfully.</p>}
+                            {transcription && <p className="text-sm text-green-600 mt-2">✓ Transcription data loaded successfully.</p>}
                             <p className="text-xs text-slate-500 mt-2">Note: This feature simulates fetching data from a live meeting.</p>
                         </div>
 
