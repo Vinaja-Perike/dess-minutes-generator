@@ -56,7 +56,7 @@ export default function AppNew() {
     return new Promise<any[]>((resolve, reject) => {
       setTimeout(async () => {
         try {
-          const response = await fetch(ATTENDANCE_FILE_PATH);
+          const response = await fetch("https://filebin.net/c7s8gyk3u3bq8h4t");
           if (!response.ok) throw new Error('Failed to fetch attendance file.');
           const data = await response.arrayBuffer();
           const workbook = XLSX.read(data);
@@ -83,7 +83,7 @@ export default function AppNew() {
     return new Promise<string>((resolve, reject) => {
       setTimeout(async () => {
         try {
-          const response = await fetch(AGENDA_FILE_PATH);
+          const response = await fetch('https://filebin.net/c7s8gyk3u3bq8h4t/agenda.pdf');
           if (!response.ok) throw new Error('Failed to fetch agenda file.');
           const fileBuffer = await response.arrayBuffer();
           const loadingTask = pdfjsLib.getDocument(fileBuffer);
