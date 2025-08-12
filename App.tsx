@@ -18,7 +18,7 @@ declare global {
 }
 
 export default function App() {
-    const [meetingId, setMeetingId] = useState('542-866-092');
+    const [meetingId, setMeetingId] = useState('qyk-mvgg-bgg');
     const [transcription, setTranscription] = useState<string | null>(null);
     const [agenda, setAgenda] = useState<string>('');
     const [agendaFileName, setAgendaFileName] = useState<string | null>(null);
@@ -49,6 +49,7 @@ export default function App() {
         setError(null);
         try {
             const data = await fetchMeetingData(meetingId);
+            // const data = await fetchMeetingData(meetingId,process.env.GOOGLE_API_KEY);
             setTranscription(data.transcription);
         } catch (err) {
             setError(err instanceof Error ? `Failed to fetch data: ${err.message}` : 'An unknown error occurred.');
@@ -59,40 +60,51 @@ export default function App() {
     }, [meetingId]);
 
     const handleAttendanceUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-        if (!file.name.match(/\.(xlsx|xls)$/)) {
-            setError('Please upload a valid Excel file (.xlsx or .xls).');
-            return;
+    if (!file.name.match(/\.(xlsx|xls)$/)) {
+        setError('Please upload a valid Excel file (.xlsx or .xls).');
+        return;
+    }
+
+    setIsParsingAttendance(true);
+    setAttendanceFileName(file.name);
+    setError(null);
+    setAttendanceData(null);
+
+    try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+        // Check the column headers for the new format
+        const firstRow = json[0];
+        if (!firstRow || !('Name' in firstRow && 'Attendance' in firstRow)) {
+            throw new Error("Excel sheet must contain 'Name' and 'Attendance' columns.");
         }
 
-        setIsParsingAttendance(true);
-        setAttendanceFileName(file.name);
-        setError(null);
-        setAttendanceData(null);
+        // Validate the 'Attendance' column values
+        const validAttendanceValues = ['Present through VC', 'Present through AC', 'Present', 'Absent','Present in Person'];
+        const isValidData = json.every(row => {
+            return row.Name && validAttendanceValues.includes(row.Attendance);
+        });
 
-        try {
-            const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data);
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const json: any[] = XLSX.utils.sheet_to_json(worksheet);
-
-            const firstRow = json[0];
-            if (!firstRow || !('Name' in firstRow && 'Attendance' in firstRow && 'Mode of Attendance' in firstRow)) {
-                throw new Error("Excel sheet must contain 'Name', 'Attendance', and 'Mode of Attendance' columns.");
-            }
-
-            setAttendanceData(json);
-        } catch (err) {
-            setError(err instanceof Error ? `Failed to parse Excel file: ${err.message}` : 'An unknown error occurred during parsing.');
-            console.error(err);
-            setAttendanceFileName(null);
-        } finally {
-            setIsParsingAttendance(false);
+        if (!isValidData) {
+            throw new Error('One or more rows have invalid data in the Attendance column. Valid values are: Present through VC, Present through AC, Present, or Absent.');
         }
-    };
+
+        setAttendanceData(json);
+    } catch (err) {
+        setError(err instanceof Error ? `Failed to parse Excel file: ${err.message}` : 'An unknown error occurred during parsing.');
+        console.error(err);
+        setAttendanceFileName(null);
+    } finally {
+        setIsParsingAttendance(false);
+    }
+};
 
     const handleClearAttendance = () => {
         setAttendanceData(null);
@@ -270,7 +282,7 @@ export default function App() {
                                     className="hidden"
                                 />
                             </div>
-                            <p className="text-xs text-slate-500 mt-2">Requires columns: Name, Attendance (Yes/No), Mode of Attendance (Online/Offline).</p>
+                            {/* <p className="text-xs text-slate-500 mt-2">Requires columns: Name, Attendance (Yes/No), Mode of Attendance (Online/Offline).</p> */}
                             {attendanceData && <p className="text-sm text-green-600 mt-2">✓ Parsed {attendanceData.length} attendees.</p>}
                         </div>
 
