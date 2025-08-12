@@ -167,7 +167,7 @@ export default function App() {
         setMinutesOfMeeting(null);
 
         try {
-            const minutes = await generateMinutesOfMeeting(agenda, transcription, attendanceData);
+            const minutes = await generateMinutesOfMeeting(agenda, transcription, attendanceData,'narrativeAndBullet');
             setMinutesOfMeeting(minutes);
         } catch (err) {
             setError(err instanceof Error ? `Failed to generate minutes: ${err.message}` : 'An unknown error occurred.');
