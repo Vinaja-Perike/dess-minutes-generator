@@ -3,6 +3,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import AppNew from './AppNew';
 import App from './App';
+import App3 from './App3';
+import ZoomVersion from './ZoomVersion';
+import GoogleVersion from './App';
+import TeamsVersion from './TeamsVersion';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -12,7 +16,10 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <AppNew />
-    {/* <App /> */}
+    {/* <AppNew/> */}
+    {/* <GoogleVersion />  */}
+    {/* <ZoomVersion/> */}
+    <App3/>
+    {/* <TeamsVersion/> */}
   </React.StrictMode>
 );

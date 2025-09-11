@@ -7,6 +7,7 @@ import { fetchMeetingData } from './services/googleMeetService';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 import * as XLSX from 'xlsx';
 import { Editor } from '@tinymce/tinymce-react';
+import { fetchZoomMeetingData } from './services/zoomService';
 
 // Configure the worker for pdf.js using a stable CDN URL to prevent parsing errors
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://esm.sh/pdfjs-dist@5.4.54/build/pdf.worker.mjs`;
@@ -18,8 +19,8 @@ declare global {
 
 }
 
-export default function GoogleVersion() {
-    const [meetingId, setMeetingId] = useState('qyk-mvgg-bgg');
+export default function ZoomVersion() {
+    const [meetingId, setMeetingId] = useState('86886457350');
     const [transcription, setTranscription] = useState<string | null>(null);
     const [agenda, setAgenda] = useState<string>('');
     const [agendaFileName, setAgendaFileName] = useState<string | null>(null);
@@ -50,9 +51,12 @@ export default function GoogleVersion() {
         setIsLoadingTranscription(true);
         setError(null);
         try {
-            const data = await fetchMeetingData(meetingId);
-            // const data = await fetchMeetingData(meetingId,process.env.GOOGLE_API_KEY);
-            setTranscription(data.transcription);
+            const data = await fetchZoomMeetingData({
+                meetingId,
+                clientId: process.env.ZOOM_CLIENT_ID!,
+               
+            });           
+            setTranscription(data.transcript);
         } catch (err) {
             setError(err instanceof Error ? `Failed to fetch data: ${err.message}` : 'An unknown error occurred.');
             console.error(err);
@@ -220,8 +224,9 @@ export default function GoogleVersion() {
             <main className="container mx-auto px-4 py-8 md:py-12">
                 <header className="text-center mb-10">
                     <div className="inline-flex items-center gap-3 bg-white shadow-sm rounded-full p-3 mb-4">
-                        <div className=" text-white p-2 rounded-full"><img src="https://www.dess.digital/wp-content/uploads/2021/09/cropped-Dess-Logo-Final-1-1.png" alt="Company Logo" width="48" height="48" /></div> | 
-                        <div className=" text-white p-2 rounded-full"><img src="assets/meet.png" alt="Company Logo" width="40" height="40" /></div>
+                        
+                        <div className=" text-white p-2 rounded-full"><img src="https://www.dess.digital/wp-content/uploads/2021/09/cropped-Dess-Logo-Final-1-1.png" alt="Company Logo" width="48" height="48" /></div> |
+                        <div className=" text-white p-2 rounded-full"><img src="assets/zoom.png" alt="Company Logo" width="48" height="48" /></div>
                         <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">Dess Meeting Minutes Generator</h1>
                     </div>
                     <p className="text-lg text-slate-600 max-w-2xl mx-auto">
@@ -344,8 +349,8 @@ export default function GoogleVersion() {
                                     onClick={handleCopyText}
                                     disabled={!minutesOfMeeting || isCopied}
                                     className={`px-4 py-2 font-semibold rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2 ${isCopied
-                                            ? 'bg-green-600 text-white'
-                                            : 'bg-slate-200 text-slate-700 hover:bg-slate-300 disabled:bg-slate-200 disabled:text-slate-400'
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-slate-200 text-slate-700 hover:bg-slate-300 disabled:bg-slate-200 disabled:text-slate-400'
                                         }`}
                                 >
                                     {isCopied ? <Check size={16} /> : <Copy size={16} />}

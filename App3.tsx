@@ -7,6 +7,8 @@ import { fetchMeetingData } from './services/googleMeetService';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 import * as XLSX from 'xlsx';
 import { Editor } from '@tinymce/tinymce-react';
+import { BeatLoader } from 'react-spinners';
+import mammoth from 'mammoth';
 
 // Configure the worker for pdf.js using a stable CDN URL to prevent parsing errors
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://esm.sh/pdfjs-dist@5.4.54/build/pdf.worker.mjs`;
@@ -18,23 +20,33 @@ declare global {
 
 }
 
-export default function GoogleVersion() {
+export default function App3() {
     const [meetingId, setMeetingId] = useState('qyk-mvgg-bgg');
     const [transcription, setTranscription] = useState<string | null>(null);
     const [agenda, setAgenda] = useState<string>('');
     const [agendaFileName, setAgendaFileName] = useState<string | null>(null);
     const [attendanceData, setAttendanceData] = useState<any[] | null>(null);
+    const [transcriptionData, settranscriptionData] = useState(null);
     const [attendanceFileName, setAttendanceFileName] = useState<string | null>(null);
+    const [transcriptionFileName, settranscriptionFileName] = useState<string | null>(null);
+
     const [minutesOfMeeting, setMinutesOfMeeting] = useState<string | null>(null);
     const [isLoadingTranscription, setIsLoadingTranscription] = useState<boolean>(false);
     const [isParsingAgenda, setIsParsingAgenda] = useState<boolean>(false);
     const [isParsingAttendance, setIsParsingAttendance] = useState<boolean>(false);
+
+    const [isParsingTranscription, setisParsingTranscription] = useState<boolean>(false);
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState(false);
-
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isDialogLoading, setIsDialogLoading] = useState(false);
+    const [generationStarted, setGenerationStarted] = useState(false);
+    const [selectedOption, setSelectedOption] = useState('');
     const agendaFileRef = useRef<HTMLInputElement>(null);
     const attendanceFileRef = useRef<HTMLInputElement>(null);
+
+    const transcriptionRef = useRef<HTMLInputElement>(null);
     const { downloadPdf, isDownloading } = usePdfDownloader();
 
     const [renderedMinutes, setRenderedMinutes] = useState<string>('');
@@ -45,21 +57,46 @@ export default function GoogleVersion() {
             setRenderedMinutes(window.marked.parse(minutesOfMeeting));
         }
     }, [minutesOfMeeting]);
-
-    const handleFetchTranscription = useCallback(async () => {
-        setIsLoadingTranscription(true);
-        setError(null);
+    const handleConfirmGeneration = async (meetingId: string) => {
         try {
-            const data = await fetchMeetingData(meetingId);
-            // const data = await fetchMeetingData(meetingId,process.env.GOOGLE_API_KEY);
-            setTranscription(data.transcription);
+            // const meetingData = await fetchMeetingData(meetingId);
+            startGenerationProcess();
         } catch (err) {
-            setError(err instanceof Error ? `Failed to fetch data: ${err.message}` : 'An unknown error occurred.');
+            setIsDialogOpen(false);
+            setIsDialogLoading(false);
+            setError(err instanceof Error ? `Failed to generate minutes: ${err.message}` : 'An unknown error occurred.');
+            console.error("Failed to fetch meeting data:", error);
+        }
+    };
+    const startGenerationProcess = async () => {
+        setIsDialogLoading(true);
+        setIsDialogOpen(false);
+        setMinutesOfMeeting(null);
+        setError(null);
+        setGenerationStarted(true);
+        setIsGenerating(true);
+        // console.log("Starting generation process with transcription:", transcriptionToUse);
+        try {
+            // const transcriptionData = transcription;
+            // console.log("Transcription Data:", transcriptionData);
+            // const attendanceData = await simulateParseAttendance();
+            setAttendanceData(attendanceData);
+            const agendaText = agenda
+            setAgenda(agendaText);
+            // console.log("Parsed Agenda Text:", agendaText);
+            const minutes = await generateMinutesOfMeeting(agendaText, transcriptionData, attendanceData, selectedOption);
+            setMinutesOfMeeting(minutes);
+        } catch (err) {
+            setIsDialogOpen(false);
+            setIsDialogLoading(false);
+            setError(err instanceof Error ? `Failed to generate minutes: ${err.message}` : 'An unknown error occurred.');
             console.error(err);
         } finally {
-            setIsLoadingTranscription(false);
+            setIsDialogLoading(false);
+            setIsGenerating(false);
         }
-    }, [meetingId]);
+    };
+
 
     const handleAttendanceUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -108,6 +145,74 @@ export default function GoogleVersion() {
         }
     };
 
+
+    const handleTranscriptionUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Check for DOC/DOCX file extension
+        if (!file.name.match(/\.(docx|doc)$/)) {
+            setError('Please upload a valid Word document (.docx or .doc).');
+            return;
+        }
+
+        setisParsingTranscription(true);
+        settranscriptionFileName(file.name);
+        setError(null);
+        settranscriptionData(null);
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            const textContent = result.value;
+            // console.log("Extracted Text Content:", textContent);
+
+            // Basic validation - check if document has meaningful content
+            if (!textContent || textContent.trim().length < 10) {
+                throw new Error("The document appears to be empty or contains very little text.");
+            }
+
+            // Parse the text content into structured data
+            // const parsedData = parseTranscriptionText(textContent);
+
+            // Validate parsed data
+            // if (!parsedData || parsedData.length === 0) {
+            //     throw new Error("Could not extract meaningful data from the document.");
+            // }
+            console.log("Parsed Transcription Data:", textContent);
+            settranscriptionData(textContent);
+        } catch (err) {
+            setError(err instanceof Error ? `Failed to parse document: ${err.message}` : 'An unknown error occurred during parsing.');
+            console.error(err);
+            settranscriptionFileName(null);
+        } finally {
+            setisParsingTranscription(false);
+        }
+    };
+
+    // Example parser - customize based on your document structure
+    const parseTranscriptionText = (text: string): any[] => {
+        const lines = text.split('\n').filter(line => line.trim());
+        const transcriptData = [];
+
+        // Example parsing logic - adjust according to your document format
+        for (const line of lines) {
+            // Customize this based on how your transcription document is structured
+            // This example looks for patterns like "Name: John Doe, Attendance: Present"
+            const nameMatch = line.match(/Name:\s*(.+?)(,|$)/i);
+            const attendanceMatch = line.match(/Attendance:\s*(.+?)(,|$)/i);
+
+            if (nameMatch && attendanceMatch) {
+                transcriptData.push({
+                    Name: nameMatch[1].trim(),
+                    Attendance: attendanceMatch[1].trim(),
+                    // Add other fields as needed
+                });
+            }
+        }
+
+        return transcriptData;
+    };
     const handleClearAttendance = () => {
         setAttendanceData(null);
         setAttendanceFileName(null);
@@ -115,7 +220,12 @@ export default function GoogleVersion() {
             attendanceFileRef.current.value = '';
         }
     };
-
+    const handleClearTranscription = () => {
+        settranscriptionData(null);
+        if (transcriptionRef.current) {
+            transcriptionRef.current.value = '';
+        }
+    };
     const handleAgendaUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -142,6 +252,7 @@ export default function GoogleVersion() {
                 fullText += pageText + '\n\n';
             }
             setAgenda(fullText.trim());
+            console.log("Parsed Agenda Text:", fullText.trim());
         } catch (err) {
             setError('Failed to parse PDF file. Please ensure it is not corrupted.');
             console.error(err);
@@ -169,7 +280,7 @@ export default function GoogleVersion() {
         setMinutesOfMeeting(null);
 
         try {
-            const minutes = await generateMinutesOfMeeting(agenda, transcription, attendanceData, 'narrativeAndBullet');
+            const minutes = await generateMinutesOfMeeting(agenda, transcription, attendanceData, selectedOption);
             setMinutesOfMeeting(minutes);
         } catch (err) {
             setError(err instanceof Error ? `Failed to generate minutes: ${err.message}` : 'An unknown error occurred.');
@@ -212,7 +323,9 @@ export default function GoogleVersion() {
             }
         }
     };
-
+    const handleGenerateButtonClick = () => {
+        setIsDialogOpen(true);
+    };
     const isGenerateDisabled = !transcription || !agenda || !attendanceData || isGenerating || isLoadingTranscription || isParsingAgenda || isParsingAttendance;
 
     return (
@@ -220,8 +333,7 @@ export default function GoogleVersion() {
             <main className="container mx-auto px-4 py-8 md:py-12">
                 <header className="text-center mb-10">
                     <div className="inline-flex items-center gap-3 bg-white shadow-sm rounded-full p-3 mb-4">
-                        <div className=" text-white p-2 rounded-full"><img src="https://www.dess.digital/wp-content/uploads/2021/09/cropped-Dess-Logo-Final-1-1.png" alt="Company Logo" width="48" height="48" /></div> | 
-                        <div className=" text-white p-2 rounded-full"><img src="assets/meet.png" alt="Company Logo" width="40" height="40" /></div>
+                        <div className=" text-white p-2 rounded-full"><img src="https://www.dess.digital/wp-content/uploads/2021/09/cropped-Dess-Logo-Final-1-1.png" alt="Company Logo" width="48" height="48" /></div>
                         <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">Dess Meeting Minutes Generator</h1>
                     </div>
                     <p className="text-lg text-slate-600 max-w-2xl mx-auto">
@@ -232,7 +344,7 @@ export default function GoogleVersion() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                     {/* Left Column: Inputs */}
                     <div className="bg-white p-6 rounded-xl shadow-md space-y-6">
-                        <div>
+                        {/* <div>
                             <h2 className="text-xl font-semibold text-slate-700 mb-3">1. Fetch Meeting Data</h2>
                             <div className="flex items-center gap-3">
                                 <input
@@ -253,8 +365,64 @@ export default function GoogleVersion() {
                             </div>
                             {transcription && <p className="text-sm text-green-600 mt-2">✓ Transcription data loaded successfully.</p>}
                             <p className="text-xs text-slate-500 mt-2">Note: This feature simulates fetching data from a live meeting.</p>
-                        </div>
+                        </div> */}
+                        <div>
+                            <h2 className="text-xl font-semibold text-slate-700 mb-3">1. Upload Transcription</h2>
+                            <div className="border border-slate-300 rounded-lg p-3 bg-slate-50">
+                                {!transcriptionFileName ? (
+                                    <button
+                                        onClick={() => transcriptionRef.current?.click()}
+                                        disabled={isParsingTranscription}
+                                        className="w-full flex items-center justify-center gap-3 text-center py-3 px-4 bg-white hover:bg-slate-100 rounded-md text-slate-600 font-semibold transition border border-dashed border-slate-400 disabled:opacity-50"
+                                    >
+                                        {isParsingTranscription ? (
+                                            <>
+                                                <Loader className="text-slate-600 animate-spin" />
+                                                Parsing Doc...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Users size={18} />
+                                                Upload Transcription (Doc)
+                                            </>
+                                        )}
+                                    </button>
+                                ) : (
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-slate-700 overflow-hidden">
+                                            <Users size={18} className="flex-shrink-0" />
+                                            <span className="font-medium truncate" title={transcriptionFileName}>
+                                                {transcriptionFileName}
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                settranscriptionFileName('');
+                                                settranscriptionData(null);
+                                                if (transcriptionRef.current) transcriptionRef.current.value = '';
+                                            }}
+                                            className="text-slate-500 hover:text-red-600 transition-colors p-1 rounded-full flex-shrink-0"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                )}
+                                <input
+                                    type="file"
+                                    ref={transcriptionRef}
+                                    onChange={handleTranscriptionUpload}
+                                    accept=".doc, .docx"
+                                    className="hidden"
+                                />
+                            </div>
 
+                            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+                            {transcriptionData && (
+                                <p className="text-sm text-green-600 mt-2">
+                                    ✓ Successfully parsed.
+                                </p>
+                            )}
+                        </div>
                         <div>
                             <h2 className="text-xl font-semibold text-slate-700 mb-3">2. Upload Attendance Sheet</h2>
                             <div className="border border-slate-300 rounded-lg p-3 bg-slate-50">
@@ -325,8 +493,8 @@ export default function GoogleVersion() {
                         <div className="border-t border-slate-200 pt-6">
                             <h2 className="text-xl font-semibold text-slate-700 mb-3">4. Generate Minutes</h2>
                             <button
-                                onClick={handleGenerateMinutes}
-                                disabled={isGenerateDisabled}
+                                onClick={handleGenerateButtonClick}
+                                // disabled={isGenerateDisabled}
                                 className="w-full py-3 px-4 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-all duration-300 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg transform hover:scale-105 disabled:transform-none"
                             >
                                 {isGenerating ? <Loader /> : <Bot size={20} />}
@@ -344,8 +512,8 @@ export default function GoogleVersion() {
                                     onClick={handleCopyText}
                                     disabled={!minutesOfMeeting || isCopied}
                                     className={`px-4 py-2 font-semibold rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2 ${isCopied
-                                            ? 'bg-green-600 text-white'
-                                            : 'bg-slate-200 text-slate-700 hover:bg-slate-300 disabled:bg-slate-200 disabled:text-slate-400'
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-slate-200 text-slate-700 hover:bg-slate-300 disabled:bg-slate-200 disabled:text-slate-400'
                                         }`}
                                 >
                                     {isCopied ? <Check size={16} /> : <Copy size={16} />}
@@ -364,7 +532,9 @@ export default function GoogleVersion() {
                         <div className="prose prose-slate max-w-none flex-grow bg-slate-50 p-4 rounded-lg border border-slate-200 overflow-y-auto">
                             {isGenerating && (
                                 <div className="flex flex-col items-center justify-center h-full">
-                                    <Loader />
+                                    <div className="flex items-center justify-center w-full py-3">
+                                        <BeatLoader color="#4863A0" />
+                                    </div>
                                     <p className="text-slate-500 mt-4 animate-pulse">Generating Minutes of Meeting</p>
                                 </div>
                             )}
@@ -402,6 +572,64 @@ export default function GoogleVersion() {
                     </div>
                 </div>
             </main>
+            {isDialogOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-2xl font-bold text-slate-800">Minutes Generation</h2>
+                            <button onClick={() => setIsDialogOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <p className="text-sm text-slate-600 mb-6">Dess AI will combine your agenda and transcription to create complete minutes.</p>
+
+                        <div className="mb-6">
+                            <label htmlFor="format-dropdown" className="block text-sm font-medium text-slate-700 mb-2">
+                                Select Format
+                            </label>
+                            <select
+                                id="format-dropdown"
+                                value={selectedOption}
+                                onChange={(e) => setSelectedOption(e.target.value)}
+                                className="w-full p-2 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            >
+                                <option value="" disabled>Select an option...</option>
+                                <option value="narrativeAndBullet">Narrative summary & Bullet Points</option>
+                                <option value="bulletPoints">Bullet point format</option>
+                                <option value="narrativeSummary">Narrative Summary</option>
+                            </select>
+                        </div>
+
+                        <div className="text-sm text-slate-500 mb-6">
+                            {selectedOption === 'narrativeAndBullet' && (
+                                <p>Your minutes will be generated in summarized paragraphs with additional bullet points added below your existing agenda section and notes.</p>
+                            )}
+                            {selectedOption === 'bulletPoints' && (
+                                <p>Your minutes will be generated into bullet points and added below your existing agenda and notes.</p>
+                            )}
+                            {selectedOption === 'narrativeSummary' && (
+                                <p>Your minutes will be generated into summarized paragraphs and added below your existing agenda section & notes.</p>
+                            )}
+                        </div>
+
+                        {isDialogLoading ? (
+                            // Loader component or HTML for the loader goes here
+                            <div className="flex items-center justify-center w-full py-3">
+                                <BeatLoader color="#4863A0" />
+                            </div>
+                        ) : (
+                            // The original button
+                            <button
+                                onClick={() => handleConfirmGeneration(meetingId)}
+                                disabled={!selectedOption}
+                                className="w-full py-3 px-4 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-all duration-300 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg"
+                            >
+                                Confirm and Generate
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
