@@ -20,7 +20,7 @@ export default function Landing() {
   const [gmail, setGmail] = useState(null);
   const [profilePic, setProfilePic] = useState(null);
   const [isGoogleAuthenticated, setIsGoogleAuthenticated] = useState(false);
-
+  const storedGmail = Cookies.get('gmail')
   useEffect(() => {
     const storedGmail = Cookies.get('gmail');
     const storedProfilePic = Cookies.get('profile_pic');
@@ -43,12 +43,15 @@ export default function Landing() {
         <div className="landing-header">
           <div className="top-right">
             {gmail ? (
+              <>
               <UserProfile
                 gmail={gmail}
                 profilePic={profilePic}
                 setGmail={setGmail}
                 setProfilePic={setProfilePic}
               />
+              <div className="text-light">You are signed in as {storedGmail}</div>
+              </>
             ) : (
               <GoogleSignInButton
                 setGmail={setGmail}
@@ -56,6 +59,7 @@ export default function Landing() {
               />
             )}
           </div>
+          
           <h1 className="landing-title">Choose a meeting platform</h1>
           <p className="landing-subtitle">Pick one to continue</p>
         </div>
