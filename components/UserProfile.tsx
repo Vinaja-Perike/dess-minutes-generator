@@ -37,7 +37,10 @@ const UserProfile = ({ gmail, profilePic, setGmail, setProfilePic }) => {
         {profilePic ? (
           <img src={profilePic} alt="Profile" className="avatar-image" />
         ) : (
-          <div className="avatar-initial">{getInitial()}</div>
+          <div className="col">
+            <div className="avatar-initial">{getInitial()}</div>
+            <div className="text-light">You are signed in as {gmail.email}</div>
+          </div>
         )}
       </div>
       {dropdownVisible && (
