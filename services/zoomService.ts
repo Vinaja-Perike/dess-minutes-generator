@@ -187,7 +187,7 @@ export async function fetchZoomMeetingData(params: {
 
   // // 5) Parse to plain text
   // const plain = parseVttToPlainText(vttContent);
-  const res = await fetch(`http://localhost:4000/api/zoom/recordings?meetingId=${encodeURIComponent(meetingId)}`);
+  const res = await fetch(`https://zoom-minutes-backend.onrender.com/api/zoom/recordings?meetingId=${encodeURIComponent(meetingId)}`);
   const data = await res.json();
   console.log(data.transcript);
   return {

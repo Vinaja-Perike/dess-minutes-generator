@@ -19,7 +19,7 @@ declare global {
 }
 
 export default function GoogleVersion() {
-    const [meetingId, setMeetingId] = useState('qyk-mvgg-bgg');
+    const [meetingId, setMeetingId] = useState('bno-iefy-ujp');
     const [transcription, setTranscription] = useState<string | null>(null);
     const [agenda, setAgenda] = useState<string>('');
     const [agendaFileName, setAgendaFileName] = useState<string | null>(null);

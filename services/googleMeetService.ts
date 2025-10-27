@@ -103,12 +103,21 @@ interface MeetingsApiResponse {
     msg: string;
     data: MeetingItem[];
 }
+const getCookie = (name: string): string | null => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return parts.pop()?.split(';').shift() || null;
+    }
+    return null;
+};
 // You'll need to provide a function to get your bearer token.
 // The implementation depends on your authentication flow (e.g., OAuth 2.0).
 export const getAuthToken = async (): Promise<string> => {
     // Implement your logic to retrieve the bearer token here.
     // This could be from a stored value, by refreshing a token, etc.
-    return "ya29.A0AS3H6NzjxSJZXXs_3-PlabMwmYedifHEJWaDcUswyeai3SkLkZHIltp4FwiFIEXDaPha8CEMnO3EVkDesPIlhgOaZO862oUJOCugNy8-ix2GI3_j-ajCRyHaNW4dUO7ZmkYSxTAaSP4lKPMMY4CY1SZ_Y4G8EFAx9iQHAstJl-ka4YcSsfn1Bfolvq1G1xxjx44WGEAaCgYKAYYSARcSFQHGX2MilTTdYJDPwM4TLTyfGA9HuA0206";
+    const token = getCookie('google_access_token');
+    return token;
 };
 
 // The core function to fetch all the data

@@ -1,25 +1,25 @@
-
-import React from 'react';
+// main.jsx or index.jsx
+import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
-import AppNew from './AppNew';
-import App from './App';
-import App3 from './App3';
-import ZoomVersion from './ZoomVersion';
-import GoogleVersion from './App';
-import TeamsVersion from './TeamsVersion';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Landing from './screens/landing';
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
+const ZoomVersion = lazy(() => import('./ZoomVersion'));
+const TeamsVersion = lazy(() => import('./TeamsVersion'));
+const GoogleVersion = lazy(() => import('./App')); // your Google Meet screen
 
-const root = ReactDOM.createRoot(rootElement);
+const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    {/* <AppNew/> */}
-    {/* <GoogleVersion />  */}
-    {/* <ZoomVersion/> */}
-    <App3/>
-    {/* <TeamsVersion/> */}
+    <BrowserRouter>
+      <Suspense fallback={<div style={{ padding: 24 }}>Loading…</div>}>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/zoom" element={<ZoomVersion />} />
+          <Route path="/teams" element={<TeamsVersion />} />
+          <Route path="/google" element={<GoogleVersion />} />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
   </React.StrictMode>
 );
